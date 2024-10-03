@@ -1,0 +1,8 @@
+#!/bin/bash
+
+yc compute instance create --name server --hostname server \
+--zone ru-central1-d \
+--network-interface subnet-name=default-ru-central1-d,nat-ip-version=ipv4 \
+--create-boot-disk image-folder-id=standard-images,image-family=ubuntu-24-04-lts \
+--metadata-from-file user-data=/home/serg/project_vpn/metadata-server > ~/project_vpn/server.inf
+
