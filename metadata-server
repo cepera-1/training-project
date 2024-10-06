@@ -12,21 +12,42 @@ write_files:
     content: |
       #!/bin/bash
       
-      sudo apt update
-      mkdir -p /home/serg/easyrsa
-      sudo apt install openvpn -y &>/dev/null
-      sudo apt install easy-rsa -y &>/dev/null
+       apt update
+      mkdir -p /home/serg/easyrsa /home/serg/server-set
+      apt install openvpn -y &>/dev/null
+      apt install easy-rsa -y &>/dev/null
+      apt install prometheus-node-exporter -y &>/dev/null
       ln -s /usr/share/easy-rsa/* /home/serg/easyrsa/
+      snap install go --classic
+      cd /home/serg/server-set
+      wget https://github.com/kumina/openvpn_exporter/archive/v0.3.0.tar.gz &>/dev/null
+      tar xzf v0.3.0.tar.gz &>/dev/null
+      cd /home/serg/server-set/openvpn_exporter-0.3.0
+      sed -i 's/examples\/client.status,examples\/server2.status,examples\/server3.status/\/var\/log\/openvpn\/openvpn-status.log/' main.go
+      cat > /etc/systemd/system/openvpn_exporter.service << 'EOF'
+      [Unit]
+      Description=Prometheus OpenVPN Node Exporter
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      Type=simple
+      ExecStart=/usr/local/bin/openvpn_exporter
+
+      [Install]
+      WantedBy=multi-user.target
+      EOF
       cd /home/serg/easyrsa
       ./easyrsa init-pki &>/dev/null
       grep EASYRSA_DN vars.example | sed 's/^#//' > vars
       grep EASYRSA_ALGO vars.example | sed 's/#\?\(set_var EASYRSA_ALGO\s\).*$/\1"ec"/' >> vars
       grep EASYRSA_DIGEST vars.example | sed 's/#\?\(set_var EASYRSA_DIGEST\s\).*$/\1"sha512"/' >> vars
-      sudo chown -R serg:serg /home/serg/easyrsa/*
       openvpn --genkey secret ta.key
       cp ta.key /etc/openvpn/server
-      cp ta.key ~/.
-      
+      cp ta.key /home/serg/.
+      systemctl daemon-reload
+      systemctl enable --now prometheus-node-exporter
+
     defer: true
 runcmd:
   - ["/home/serg/init-vpn"] 
