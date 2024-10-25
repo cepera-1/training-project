@@ -1,28 +1,30 @@
 #cloud-config
 ssh_pwauth: no
 users:
-- name: serg
+- name: vpn
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
   shell: /bin/bash
   ssh_authorized_keys:
   - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPE5WI3j2DjmKuwa9TUeWKcoslSUR+tu3Mv9rTR4N61U serg@ubunta
 write_files:
-  - path: "/home/serg/init-vpn"
+  - path: "/home/vpn/init-vpn"
     permissions: "700"
     content: |
       #!/bin/bash
-      
-       apt update
-      mkdir -p /home/serg/easyrsa /home/serg/server-set
+
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      echo 'Instance start' >> /home/vpn/signal
+      apt update
+      mkdir -p /home/vpn/easyrsa /home/vpn/server-set
       apt install openvpn -y &>/dev/null
       apt install easy-rsa -y &>/dev/null
       apt install prometheus-node-exporter -y &>/dev/null
-      ln -s /usr/share/easy-rsa/* /home/serg/easyrsa/
+      ln -s /usr/share/easy-rsa/* /home/vpn/easyrsa/
       snap install go --classic
-      cd /home/serg/server-set
+      cd /home/vpn/server-set
       wget https://github.com/kumina/openvpn_exporter/archive/v0.3.0.tar.gz &>/dev/null
       tar xzf v0.3.0.tar.gz &>/dev/null
-      cd /home/serg/server-set/openvpn_exporter-0.3.0
+      cd /home/vpn/server-set/openvpn_exporter-0.3.0
       sed -i 's/examples\/client.status,examples\/server2.status,examples\/server3.status/\/var\/log\/openvpn\/openvpn-status.log/' main.go
       cat > /etc/systemd/system/openvpn_exporter.service << 'EOF'
       [Unit]
@@ -37,17 +39,22 @@ write_files:
       [Install]
       WantedBy=multi-user.target
       EOF
-      cd /home/serg/easyrsa
+      cd /home/vpn/easyrsa
       ./easyrsa init-pki &>/dev/null
       grep EASYRSA_DN vars.example | sed 's/^#//' > vars
       grep EASYRSA_ALGO vars.example | sed 's/#\?\(set_var EASYRSA_ALGO\s\).*$/\1"ec"/' >> vars
       grep EASYRSA_DIGEST vars.example | sed 's/#\?\(set_var EASYRSA_DIGEST\s\).*$/\1"sha512"/' >> vars
       openvpn --genkey secret ta.key
       cp ta.key /etc/openvpn/server
-      cp ta.key /home/serg/.
+      cp ta.key /home/vpn/.
       systemctl daemon-reload
       systemctl enable --now prometheus-node-exporter
-
+      
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      echo 'Instance done' >> /home/vpn/signal
+      sleep 5
+      rm -rf /home/vpn/signal /home/vpn/init-vpn
+      
     defer: true
 runcmd:
-  - ["/home/serg/init-vpn"] 
+  - ["/home/vpn/init-vpn"] 

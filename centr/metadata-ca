@@ -1,0 +1,66 @@
+#cloud-config
+ssh_pwauth: no
+users:
+- name: vpn
+  sudo: 'ALL=(ALL) NOPASSWD:ALL'
+  shell: /bin/bash
+  ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPE5WI3j2DjmKuwa9TUeWKcoslSUR+tu3Mv9rTR4N61U serg@ubunta
+write_files:
+  - path: "/home/vpn/init-ca"
+    permissions: "700"
+    content: |
+      #!/bin/bash
+      
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      apt update
+      mkdir -p /home/vpn/easyrsa /home/vpn/requests
+      apt install prometheus-node-exporter -y &>/dev/null
+      apt install easy-rsa -y &>/dev/null
+      ln -s /usr/share/easy-rsa/* /home/vpn/easyrsa/
+      cd /home/vpn/easyrsa
+      ./easyrsa init-pki &>/dev/null
+      grep EASYRSA_DN vars.example | sed 's/^#//' > vars
+      grep EASYRSA_ALGO vars.example | sed 's/#\?\(set_var EASYRSA_ALGO\s\).*$/\1"ec"/' >> vars
+      grep EASYRSA_DIGEST vars.example | sed 's/#\?\(set_var EASYRSA_DIGEST\s\).*$/\1"sha512"/' >> vars
+      ./easyrsa build-ca nopass <<< centr-ca &>/dev/null
+      cat > /etc/systemd/system/req@.service << 'EOF'
+      [Unit]
+      Description="Сервис отслеживания запросов на сертификацию"
+
+      [Service]
+      ExecStart=/usr/local/bin/req-proc.sh %i
+      Restart=on-failure
+      EOF
+      cat > /etc/systemd/system/req_client.path << 'EOF'
+      [Unit]
+      Description="Отслеживание изменений в директории /home/vpn/requests/client"
+
+      [Path]
+      DirectoryNotEmpty=/home/vpn/requests/client
+      Unit=req@client.service
+
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      cat > /etc/systemd/system/req_server.path << 'EOF'
+      [Unit]
+      Description="Отслеживание изменений в директории /home/vpn/requests/server"
+
+      [Path]
+      DirectoryNotEmpty=/home/vpn/requests/server
+      Unit=req@server.service
+
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      echo 'Instance done' >> /home/vpn/signal
+      sleep 5
+      rm -rf /home/vpn/signal /home/vpn/init-ca
+      
+    defer: true
+runcmd:
+  - ["/home/vpn/init-ca"]
+  
+  
