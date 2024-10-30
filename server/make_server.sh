@@ -5,8 +5,6 @@ start=$(date +%H%M%S)
 user=$(users)
 sudo chown -R $user:$user /usr/share/vpn
 
-
-
 count() {
 	for i in \| \/ \- \\ \| \/ \- \\
 	do
@@ -35,6 +33,8 @@ yc compute instance create --name server --hostname server \
 serv=$(grep -A1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2}')
 serv_int=$(grep -B1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2}')
 
+echo -e "\n   Server:\nserv_int:$serv_int\nserv_ext:$serv" >> /usr/share/vpn/config
+
 $ssh_test vpn@$serv 'exit 0' &>/dev/null
 while [ $? != 0 ]
 do
@@ -43,30 +43,37 @@ do
 done
 $ssh_test vpn@$serv 'echo | ssh-keygen -t ed25519 -P "" &>/dev/null &&\
         cat ~/.ssh/id_ed25519.pub' >> ~/.ssh/authorized_keys
+        cat .ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
 echo Выполнено!
 
-$ssh_test vpn@$serv "cat /home/vpn/signal 2>/dev/null" > /usr/share/vpn/signal.s &&\
+$ssh_test vpn@$serv "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.s &&\
         cat /usr/share/vpn/signal.s | grep 'Instance done' &>/dev/null
 while [ $? != 0 ]
 do
         count "Установка и настройка демонов"
-        $ssh_test vpn@$serv "cat /home/vpn/signal 2>/dev/null" > /usr/share/vpn/signal.s &&\
+        $ssh_test vpn@$serv "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.s &&\
                 cat /usr/share/vpn/signal.s | grep 'Instance done' &>/dev/null
 done
 echo Выполнено!
 
+scp /usr/share/vpn/make_req.sh vpn@$serv:~/. &>/dev/null
+scp /usr/share/vpn/conf_make.sh vpn@$serv:~/. &>/dev/null
+scp /usr/share/vpn/iptables.sh vpn@$serv:~/. &>/dev/null
 
 ssh -t vpn@$serv 'sudo chown -R vpn:vpn /home/vpn/ &&\
-       cd /home/vpn/server-set/openvpn_exporter-0.3.0 &&\
-       sudo bash -c "go build -o /usr/local/bin/openvpn_exporter main.go" &&\
+       mv ~/make_req.sh ~/conf_make.sh ~/iptables.sh ~/server-set/\
+       && cd ~/server-set/openvpn_exporter-0.3.0 &&\
+       sudo bash -c "go build -o /usr/local/bin/openvpn_exporter main.go" &>/dev/null &&\
        sudo systemctl daemon-reload &&\
-       sudo systemctl enable --now openvpn_exporter.service && ls -li ~/* &&\
-       systemctl status openvpn_exporter.service prometheus-node-exporter'       
+       sudo systemctl enable --now openvpn_exporter.service'       
+echo Демоны запущены!
 
+rm /usr/share/vpn/server.inf /usr/share/vpn/signal.s
 stop=$(date +%H%M%S)
 time=$(expr $stop - $start)
 min=$(expr $time / 60)
 sec=$(expr $time % 60)
 
 echo Установка заняла $min мин $sec сек.
+echo "ssh vpn@$serv"
 exit 0

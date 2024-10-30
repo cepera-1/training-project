@@ -33,6 +33,8 @@ yc compute instance create --name centr --hostname centr \
 centr=$(grep -A1 one_to /usr/share/vpn/centr.inf | grep address | awk '{print $2}')
 centr_int=$(grep -B1 one_to /usr/share/vpn/centr.inf | grep address | awk '{print $2}')
 
+echo -e "\n   Centr:\ncentr_int:$centr_int\ncentr_ext:$centr" >> /usr/share/vpn/config
+
 $ssh_test vpn@$centr 'exit 0' &>/dev/null
 while [ $? != 0 ]
 do
@@ -41,23 +43,26 @@ do
 done
 $ssh_test vpn@$centr 'echo | ssh-keygen -t ed25519 -P "" &>/dev/null &&\
        	cat ~/.ssh/id_ed25519.pub' >> ~/.ssh/authorized_keys  
+        cat .ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
 echo Выполнено!
 
-$ssh_test vpn@$centr "cat /home/vpn/signal 2>/dev/null" > /usr/share/vpn/signal.c &&\
+$ssh_test vpn@$centr "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.c &&\
        	cat /usr/share/vpn/signal.c | grep 'Instance done' &>/dev/null
 while [ $? != 0 ]
 do
         count "Установка и настройка демонов"
-        $ssh_test vpn@$centr "cat /home/vpn/signal 2>/dev/null" > /usr/share/vpn/signal.c &&\
-	       	cat /usr/share/vpn/signal.c | grep 'Instance done' &>/dev/null
+        $ssh_test vpn@$centr "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.c &&\
+        cat /usr/share/vpn/signal.c | grep 'Instance done' &>/dev/null
 done
 echo Выполнено!
+
 scp /usr/share/vpn/req-proc.sh vpn@$centr:~/. &>/dev/null
 ssh -t vpn@$centr "sudo mv ~/req-proc.sh /usr/local/bin && sudo systemctl daemon-reload &&\
         sudo systemctl enable --now req_server.path req_client.path prometheus-node-exporter\
         && sudo chmod +x /usr/local/bin/req-proc.sh &&\
         sudo chown -R vpn:vpn ~ && req-proc.sh client" &>/dev/null
 echo Демоны запущены!
+rm /usr/share/vpn/centr.inf /usr/share/vpn/signal.c
 stop=$(date +%H%M%S)
 time=$(expr $stop - $start)
 min=$(expr $time / 60)

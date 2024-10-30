@@ -1,0 +1,5 @@
+make_server.sh usr/bin/
+conf_make.sh usr/share/vpn/
+iptables.sh usr/share/vpn/
+make_req.sh usr/share/vpn/
+metadata-server usr/share/vpn/
