@@ -34,6 +34,7 @@ serv=$(grep -A1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2
 serv_int=$(grep -B1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2}')
 
 echo -e "\n   Server:\nserv_int:$serv_int\nserv_ext:$serv" >> /usr/share/vpn/config
+sed -i "s/\(serv=\).*$/\1$serv/" /usr/share/vpn/conf_make.sh
 
 $ssh_test vpn@$serv 'exit 0' &>/dev/null
 while [ $? != 0 ]
@@ -43,7 +44,7 @@ do
 done
 $ssh_test vpn@$serv 'echo | ssh-keygen -t ed25519 -P "" &>/dev/null &&\
         cat ~/.ssh/id_ed25519.pub' >> ~/.ssh/authorized_keys
-        cat .ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
+        cat ~/.ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
 echo Выполнено!
 
 $ssh_test vpn@$serv "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.s &&\

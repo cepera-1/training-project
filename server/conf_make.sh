@@ -7,6 +7,7 @@ cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ./expr/
 cd expr
 echo directory created !
 crt=$(ls -li /etc/openvpn/server | grep crt | grep server | awk '{print  $10}')
+serv=
 echo $crt
 
 base_conf() {
@@ -34,7 +35,7 @@ sed -i 's/;\?\(key\s.*$\)/\;\1/' client.conf
 sed -i "s/;\?\(cert\s\).*$/\1$crt/" server.conf
 sed -i "s/;\?\(key\s\).*$/\1server.key/" server.conf
 sed -i 's/\(auth SHA256\)/\1\n\nkey\-direction 1/' client.conf
-sed -i "s/;\?\(remote\)\smy-server-1.*$/\1 $1 1194/" client.conf
+sed -i "s/;\?\(remote\)\smy-server-1.*$/\1 $serv 1194/" client.conf
 sed -i 's/;\?\(push "redirect-gateway def1 bypass-dh\).*$/\1cp"/' server.conf
 sudo sed -i 's/#\?\(net.ipv4.ip_forward=1\)/\1/' /etc/sysctl.conf
 sudo sysctl -p

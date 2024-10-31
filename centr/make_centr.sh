@@ -43,7 +43,7 @@ do
 done
 $ssh_test vpn@$centr 'echo | ssh-keygen -t ed25519 -P "" &>/dev/null &&\
        	cat ~/.ssh/id_ed25519.pub' >> ~/.ssh/authorized_keys  
-        cat .ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
+        cat ~/.ssh/authorized_keys | tail -n 1 >> /usr/share/vpn/config
 echo Выполнено!
 
 $ssh_test vpn@$centr "cat ~/signal 2>/dev/null" > /usr/share/vpn/signal.c &&\
