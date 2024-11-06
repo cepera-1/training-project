@@ -1,0 +1,30 @@
+#cloud-config
+ssh_pwauth: no
+users:
+- name: vpn
+  sudo: 'ALL=(ALL) NOPASSWD:ALL'
+  shell: /bin/bash
+  ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPE5WI3j2DjmKuwa9TUeWKcoslSUR+tu3Mv9rTR4N61U serg@ubunta
+write_files:
+  - path: "/home/vpn/init-monitor"
+    permissions: "700"
+    content: |
+      #!/bin/bash
+      
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      apt update
+      apt install nginx -y &>/dev/null
+      apt install prometheus -y &>/dev/null
+      apt install prometheus-alertmanager -y &>/dev/null
+      apt install prometheus-node-exporter -y &>/dev/null
+      apt install prometheus-nginx-exporter -y &>/dev/null
+
+      echo $(date +%H:%M:%S) >> /home/vpn/signal
+      echo 'Instance done' >> /home/vpn/signal
+      sleep 5
+      rm /home/vpn/signal /home/vpn/init-monitor
+    defer: true
+runcmd:
+  - ["/home/vpn/init-monitor"]
+

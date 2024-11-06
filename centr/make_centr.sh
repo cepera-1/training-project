@@ -33,7 +33,7 @@ yc compute instance create --name centr --hostname centr \
 centr=$(grep -A1 one_to /usr/share/vpn/centr.inf | grep address | awk '{print $2}')
 centr_int=$(grep -B1 one_to /usr/share/vpn/centr.inf | grep address | awk '{print $2}')
 
-echo -e "\n   Centr:\ncentr_int:$centr_int\ncentr_ext:$centr" >> /usr/share/vpn/config
+echo -e "   Centr:\ncentr_int:$centr_int\ncentr_ext:$centr\n" >> /usr/share/vpn/config
 
 $ssh_test vpn@$centr 'exit 0' &>/dev/null
 while [ $? != 0 ]

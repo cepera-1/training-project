@@ -1,5 +1,5 @@
 #!/bin/bash
-#set -x
+set -x
 start=$(date +%H%M%S)
 
 user=$(users)
@@ -33,7 +33,7 @@ yc compute instance create --name server --hostname server \
 serv=$(grep -A1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2}')
 serv_int=$(grep -B1 one_to /usr/share/vpn/server.inf | grep address | awk '{print $2}')
 
-echo -e "\n   Server:\nserv_int:$serv_int\nserv_ext:$serv" >> /usr/share/vpn/config
+echo -e "   Server:\nserv_int:$serv_int\nserv_ext:$serv\n" >> /usr/share/vpn/config
 sed -i "s/\(serv=\).*$/\1$serv/" /usr/share/vpn/conf_make.sh
 
 $ssh_test vpn@$serv 'exit 0' &>/dev/null

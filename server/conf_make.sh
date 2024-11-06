@@ -5,7 +5,7 @@ mkdir expr
 cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf ./expr/
 cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ./expr/
 cd expr
-echo directory created !
+
 crt=$(ls -li /etc/openvpn/server | grep crt | grep server | awk '{print  $10}')
 serv=
 echo $crt
