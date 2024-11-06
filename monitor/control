@@ -1,0 +1,16 @@
+Source: monitor
+Section: unknown
+Priority: optional
+Maintainer: serg <aleshin_cepera@mail.ru>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.0
+Homepage: <insert the upstream URL, if relevant>
+#Vcs-Browser: https://salsa.debian.org/debian/centr
+#Vcs-Git: https://salsa.debian.org/debian/centr.git
+Rules-Requires-Root: no
+
+Package: monitor
+Architecture: all
+Depends: ${misc:Depends}
+Description: Установка центра мониторинга Prometheus
+ <insert long description, indented with spaces>
