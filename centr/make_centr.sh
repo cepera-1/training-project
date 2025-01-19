@@ -1,7 +1,7 @@
 #!/bin/bash
-
+#set -x
 start=$(date +%H%M%S)
-user=$(users)
+user=$(echo $USER)
 sudo chown -R $user:$user /usr/share/vpn
 
 count() {
@@ -57,9 +57,9 @@ done
 echo Выполнено!
 
 scp /usr/share/vpn/req-proc.sh vpn@$centr:~/. &>/dev/null
-ssh -t vpn@$centr "sudo mv ~/req-proc.sh /usr/local/bin && sudo systemctl daemon-reload &&\
-        sudo systemctl enable --now req_server.path req_client.path prometheus-node-exporter\
-        && sudo chmod +x /usr/local/bin/req-proc.sh &&\
+ssh -t vpn@$centr "sudo mv ~/req-proc.sh /usr/local/bin && sudo systemctl daemon-reload
+        sudo systemctl enable --now req_server.path req_client.path 
+        sudo chmod +x /usr/local/bin/req-proc.sh 
         sudo chown -R vpn:vpn ~ && req-proc.sh client" &>/dev/null
 echo Демоны запущены!
 rm /usr/share/vpn/centr.inf /usr/share/vpn/signal.c

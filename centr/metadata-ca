@@ -5,7 +5,7 @@ users:
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
   shell: /bin/bash
   ssh_authorized_keys:
-  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPE5WI3j2DjmKuwa9TUeWKcoslSUR+tu3Mv9rTR4N61U serg@ubunta
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFqUZDNVE4/bJQDkXi/VqKJKlJswfTe0NeZR+frgkXQE serg@Ubunta
 write_files:
   - path: "/home/vpn/init-ca"
     permissions: "700"
@@ -15,7 +15,26 @@ write_files:
       echo $(date +%H:%M:%S) >> /home/vpn/signal
       apt update
       mkdir -p /home/vpn/easyrsa /home/vpn/requests
-      apt install prometheus-node-exporter -y &>/dev/null
+      wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+      tar -xvf node_exporter-1.8.2.linux-amd64.tar.gz -C /etc/ && mv /etc/node_exporter-1.8.2.linux-amd64 /etc/node_exporter
+      cp /etc/node_exporter/node_exporter /usr/bin/
+      cat > /etc/systemd/system/prometheus-node-exporter.service << 'EOF'
+      [Unit]
+      Description=Prometheus exporter for machine metrics
+      Documentation=https://github.com/prometheus/node_exporter
+
+      [Service]
+      Restart=on-failure
+      User=vpn
+      ExecStart=/usr/bin/node_exporter --web.config.file=/etc/node_exporter/web.yml
+      ExecReload=/bin/kill -HUP $MAINPID
+      TimeoutStopSec=20s
+      SendSIGKILL=no
+
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+
       apt install easy-rsa -y &>/dev/null
       ln -s /usr/share/easy-rsa/* /home/vpn/easyrsa/
       cd /home/vpn/easyrsa

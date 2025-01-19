@@ -1,8 +1,8 @@
 #!/bin/bash
-
+#set -x
 start=$(date +%H%M%S)
 
-user=$(users)
+user=$(echo $USER)
 sudo chown -R $user:$user /usr/share/vpn
 
 count() {
@@ -56,9 +56,6 @@ do
                 cat /usr/share/vpn/signal.m | grep 'Instance done' &>/dev/null
 done
 echo Выполнено!
-
-scp /usr/share/vpn/add_exporter.sh vpn@$monitor:~/.
-ssh -t vpn@$monitor "sudo mv ~/add_exporter.sh /usr/local/bin"
 
 rm /usr/share/vpn/signal.m /usr/share/vpn/monitor.inf
 stop=$(date +%H%M%S)

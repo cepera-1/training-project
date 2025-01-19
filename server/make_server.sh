@@ -1,8 +1,8 @@
 #!/bin/bash
-set -x
+#set -x
 start=$(date +%H%M%S)
 
-user=$(users)
+user=$(echo $USER)
 sudo chown -R $user:$user /usr/share/vpn
 
 count() {
@@ -17,10 +17,10 @@ ssh_test="ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no -o ConnectTimeout=
 
 if [[ -f ~/.ssh/id_ed25519.pub && $(file ~/.ssh/id_ed25519.pub) =~ "OpenSSH ED25519 public key" ]]
 then
-        sed -i "s|- ssh-ed.*$|- $(cat ~/.ssh/id_ed25519.pub)|" /usr/share/vpn/metadata-ca
+        sed -i "s|- ssh-ed.*$|- $(cat ~/.ssh/id_ed25519.pub)|" /usr/share/vpn/metadata-server
 else
         echo | ssh-keygen -t ed25519 -P "" &>/dev/null
-        sed -i "s|- ssh-ed.*$|- $(cat ~/.ssh/id_ed25519.pub)|" /usr/share/vpn/metadata-ca
+        sed -i "s|- ssh-ed.*$|- $(cat ~/.ssh/id_ed25519.pub)|" /usr/share/vpn/metadata-server
 fi
 
 echo Установка сервера OpenVPN:
